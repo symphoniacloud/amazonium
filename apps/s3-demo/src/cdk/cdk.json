@@ -1,0 +1,6 @@
+{
+  "app": "npx tsx singleStackApp.ts",
+  "build": "cd ../.. && npx tsc",
+  "output": "../../build/cdk.out",
+  "requireApproval": "never"
+}

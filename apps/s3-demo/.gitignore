@@ -1,0 +1,6 @@
+build
+node_modules
+
+# TODO - figure out whether we want to actually check this in
+#   Depends what we end up deciding about various synth strategies
+cdk.context.json
