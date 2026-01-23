@@ -2,6 +2,7 @@ import { expect, test } from 'vitest'
 import { CloudFormationClient, DescribeStacksCommand } from '@aws-sdk/client-cloudformation'
 import { DEFAULT_STACK_NAME } from '../../src/cdk/S3DemoStack'
 import { GetBucketEncryptionCommand, S3Client } from '@aws-sdk/client-s3'
+import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts'
 
 test('Bucket should exist with correct encryption', async () => {
   const stackName = process.env['STACK_NAME'] || DEFAULT_STACK_NAME
@@ -23,7 +24,14 @@ test('Bucket should exist with correct encryption', async () => {
   const bucketName = bucketNameOutput.OutputValue
   if (!bucketName) throw new Error(`No Output value on BucketName Output on stack ${stackName}`)
 
-  const bucketEncryption = await new S3Client({}).send(new GetBucketEncryptionCommand({ Bucket: bucketName }))
+  const s3Client = new S3Client({})
+
+  const accountId = (await new STSClient({}).send(new GetCallerIdentityCommand({}))).Account
+  const region = await s3Client.config.region()
+
+  expect(bucketName).toEqual(`${stackName}-${accountId}-${region}-bucket`)
+
+  const bucketEncryption = await s3Client.send(new GetBucketEncryptionCommand({ Bucket: bucketName }))
   expect(bucketEncryption.ServerSideEncryptionConfiguration).toEqual({
     Rules: [
       {
