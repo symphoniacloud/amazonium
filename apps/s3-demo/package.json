@@ -5,6 +5,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-cloudformation": "3.x",
+    "@aws-sdk/client-s3": "3.x",
     "@eslint/js": "9.x",
     "@tsconfig/node22": "22.x",
     "@types/aws-lambda": "8.x",
@@ -24,10 +25,12 @@
     "local-checks": "npx tsc && npm run lint && npm run format",
     "lint": "eslint --max-warnings=0 --fix-dry-run \"{src,test}/**/*.{js,ts}\"",
     "format": "prettier --check \"{src,test}/**/*.{js,ts}\"",
+    "remote-tests": "npx vitest run --dir test/remote --config test/remote/vitest.config.mts",
     "deploy": "cd src/cdk && npx cdk deploy",
     "cdk-diff": "cd src/cdk && npx cdk diff",
     "cdk-destroy": "cd src/cdk && npx cdk destroy",
     "precdk-command": "echo \"Running CDK with command: $npm_config_command\"",
-    "cdk-command": "cd src/cdk && npx cdk $npm_config_command"
+    "cdk-command": "cd src/cdk && npx cdk $npm_config_command",
+    "cicd": "npm ci && npm run local-checks && npm run deploy && npm run remote-tests"
   }
 }

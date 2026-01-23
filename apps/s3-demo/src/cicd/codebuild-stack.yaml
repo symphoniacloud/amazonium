@@ -49,6 +49,4 @@ Resources:
             build:
               commands:
                 - cd apps/s3-demo
-                - npm ci
-                - npm run local-checks
-                - npm run deploy
+                - npm run cicd
