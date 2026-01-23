@@ -1,0 +1,56 @@
+# S3 Bucket Encryption Rule
+# Ensures all S3 buckets have server-side encryption configured with KMS or AES256
+
+let s3_buckets = Resources.*[ Type == 'AWS::S3::Bucket']
+
+rule S3_BUCKET_ENCRYPTION_REQUIRED when %s3_buckets !empty {
+  %s3_buckets.Properties.BucketEncryption exists
+  <<
+    Violation: S3 bucket must have encryption enabled
+    Fix: Add BucketEncryption property to the S3 bucket
+  >>
+}
+
+rule S3_BUCKET_ENCRYPTION_ALGORITHM when %s3_buckets !empty {
+  %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration exists
+  %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault exists
+  %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault.SSEAlgorithm in ["aws:kms","AES256"]
+  <<
+    Violation: S3 bucket encryption must use KMS or AES256 algorithm
+    Fix: Set ServerSideEncryptionByDefault.SSEAlgorithm to either "aws:kms" or "AES256"
+  >>
+}
+
+rule S3_BUCKET_NAMING_CONVENTION when %s3_buckets !empty {
+  %s3_buckets.Properties.BucketName exists
+  <<
+    Violation: S3 bucket must have a BucketName property
+    Fix: Add BucketName property following pattern: {environment}-{project}-{purpose}
+  >>
+}
+
+rule S3_BUCKET_NAMING_PATTERN when %s3_buckets !empty {
+  # Bucket names must follow pattern: {stackName}-{account}-{region}-bucket
+  # Extracts and validates against actual runtime context from HookContext
+
+  # StackID is of format: arn:aws:cloudformation:REGION:ACCOUNT:stack/STACK-NAME/UNIQUE-ID
+  let region = regex_replace(HookContext.StackId, "^arn:aws:cloudformation:([^:]+):.*", "$1")
+  let account = HookContext.AWSAccountID
+  let stack_name = regex_replace(HookContext.StackId, "^arn:aws:cloudformation:[^:]+:[^:]+:stack/([^/]+)/.*", "$1")
+
+  # To match CDK bucket naming convention
+  let stack_name_lower = to_lower(%stack_name)
+
+  # Build expected pattern using the HookContext StackId as a template
+  # Replace stack name, add account, region, and bucket suffix
+  # Start with StackId and extract: REGION from position, ACCOUNT from position, STACK-NAME from position
+  # Pattern: {stack-name}-{account}-{region}-bucket
+  let pattern_step1 = regex_replace(HookContext.StackId, "^arn:aws:cloudformation:([^:]+):([^:]+):stack/([^/]+)/.*", "$3-$2-$1-bucket")
+  let expected_pattern = to_lower(%pattern_step1)
+
+  %s3_buckets.Properties.BucketName == %expected_pattern
+  <<
+    Violation: S3 bucket name must match the pattern {stackName}-{account}-{region}-bucket using runtime context values
+    Fix: Bucket name must be exactly: %expected_pattern (derived from stack: %stack_name, account: %account, region: %region)
+  >>
+}

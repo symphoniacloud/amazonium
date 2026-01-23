@@ -1,0 +1,38 @@
+{
+  "name": "amazonium-hooks",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-cloudformation": "3.x",
+    "@aws-sdk/client-s3": "3.x",
+    "@aws-sdk/client-sts": "3.x",
+    "@eslint/js": "9.x",
+    "@tsconfig/node22": "22.x",
+    "@types/aws-lambda": "8.x",
+    "@types/node": "22.x",
+    "aws-cdk": "2.x",
+    "aws-cdk-lib": "2.x",
+    "constructs": "10.x",
+    "eslint": "9.x",
+    "eslint-config-prettier": "10.x",
+    "prettier": "3.x",
+    "tsx": "4.x",
+    "typescript": "5.x",
+    "typescript-eslint": "8.x",
+    "vitest": "3.x"
+  },
+  "scripts": {
+    "local-checks": "npx tsc && npm run lint && npm run format",
+    "lint": "eslint --max-warnings=0 --fix-dry-run \"{src,test}/**/*.{js,ts}\"",
+    "format": "prettier --check \"{src,test}/**/*.{js,ts}\"",
+    "local-test-hooks": "cd test/guard && ./test-guards.sh",
+    "remote-tests": "npx vitest run --dir test/remote --config test/remote/vitest.config.mts",
+    "deploy": "cd src/cdk && npx cdk deploy",
+    "cdk-diff": "cd src/cdk && npx cdk diff",
+    "cdk-destroy": "cd src/cdk && npx cdk destroy",
+    "precdk-command": "echo \"Running CDK with command: $npm_config_command\"",
+    "cdk-command": "cd src/cdk && npx cdk $npm_config_command",
+    "cicd": "npm ci && npm run local-checks && npm run deploy && npm run remote-tests"
+  }
+}
