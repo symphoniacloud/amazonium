@@ -26,7 +26,7 @@ export function createStackProps(
  * @return defaultStackName, unless stackName is specified in app context, in which case that is returned instead
  */
 export function calcStackName(app: App, defaultStackName: string) {
-  return app.node.tryGetContext('stackName') || defaultStackName
+  return app.node.tryGetContext('stackName') || process.env.STACK_NAME || defaultStackName
 }
 
 /**
