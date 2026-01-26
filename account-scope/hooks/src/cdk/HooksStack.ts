@@ -22,7 +22,10 @@ export function defineGuardHooks(scope: Construct, props: StackPropsWithAccountR
     assumedBy: new ServicePrincipal('hooks.cloudformation.amazonaws.com')
   })
 
-  const stackFilterInclude = [`t-${props.stackName}*`, ...(props.stackName === DEFAULT_STACK_NAME ? ['s3-demo*'] : [])]
+  const stackFilterInclude = [
+    `t-${props.stackName}*`,
+    ...(props.stackName === DEFAULT_STACK_NAME ? ['s3-demo*'] : [])
+  ]
   const stackFilterExclude = [`${props.stackName}*`]
 
   defineResourceGuardHook(
