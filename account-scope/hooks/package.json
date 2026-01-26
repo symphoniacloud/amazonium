@@ -1,5 +1,6 @@
 {
   "name": "amazonium-hooks",
+  "type": "module",
   "engines": {
     "node": ">=22.0.0"
   },

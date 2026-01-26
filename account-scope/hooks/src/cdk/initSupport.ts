@@ -2,7 +2,7 @@ import { App, Environment, StackProps } from 'aws-cdk-lib'
 
 // Generic functions to help with stack initialization
 
-interface StackPropsWithAccountRegionAndStackName extends StackProps {
+export interface StackPropsWithAccountRegionAndStackName extends StackProps {
   env: Required<Environment>
   stackName: string
 }

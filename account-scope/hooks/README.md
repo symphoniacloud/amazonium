@@ -119,12 +119,14 @@ npm run cdk-destroy
 **Purpose**: Enforces S3 bucket security and naming standards.
 
 **Rules**:
+
 - `S3_BUCKET_ENCRYPTION_REQUIRED`: Ensures BucketEncryption property is configured
 - `S3_BUCKET_ENCRYPTION_ALGORITHM`: Validates encryption uses KMS (`aws:kms`) or AES256
 - `S3_BUCKET_NAMING_CONVENTION`: Ensures BucketName property exists
 - `S3_BUCKET_NAMING_PATTERN`: Validates bucket names follow the pattern `{stackName}-{account}-{region}-bucket` using runtime context
 
 **Context-Aware Validation**: The naming pattern rule uses `HookContext` to extract:
+
 - AWS Account ID from `HookContext.AWSAccountID`
 - Region from `HookContext.StackId` ARN
 - Stack name from `HookContext.StackId` ARN
@@ -142,6 +144,7 @@ npm run cicd
 ```
 
 This runs:
+
 1. Clean install (`npm ci`)
 2. Local checks (TypeScript, linting, formatting)
 3. Deployment
@@ -155,10 +158,89 @@ The default stack name is `amazonium-hooks`. Override via:
 
 - Environment variable: `STACK_NAME=my-custom-name npm run deploy`
 - CDK context: `npx cdk deploy --context stackName=my-custom-name`
+- `.env` file: Create a `.env` file (see `.env.example`) with `STACK_NAME=my-custom-name`
+
+### Multi-Deployment Support
+
+Multiple hooks stacks can be deployed to the same AWS account simultaneously, enabling parallel development and testing workflows.
+
+**Use cases:**
+
+- Multiple developers working in shared AWS accounts
+- Feature branch testing without conflicts
+- CI/CD pipeline runs with unique stack instances
+- Separate dev/staging/prod hook configurations
+
+**How it works:**
+
+When using a custom stack name (not `amazonium-hooks`), the system automatically:
+
+1. **Derives a unique hook alias** from the stack name:
+   - `dev-hooks` → `Amazonium::DevHooks::S3Resource`
+   - `alice-test` → `Amazonium::AliceTest::S3Resource`
+   - `ci-run-12345` → `Amazonium::CiRun12345::S3Resource`
+
+2. **Adjusts stack filters** to match the custom name:
+   - Test stacks: `test-{stack-name}*`
+   - Excludes: `{stack-name}*`
+
+3. **Updates remote tests** to use the correct stack name and hook alias
+
+**Default stack behavior:**
+
+The default stack name (`amazonium-hooks`) uses the original hardcoded values for backward compatibility:
+
+- Hook alias: `Amazonium::Guard::S3Resource`
+- Stack filters: `['s3-demo*', 'test-amazonium-hooks*']`, exclude `['amazonium-hooks*']`
+
+**Example: Developer workflow**
+
+```bash
+# Developer 1 (Alice)
+export STACK_NAME=alice-hooks
+npm run deploy
+npm run remote-tests
+
+# Developer 2 (Bob) - in the same AWS account
+export STACK_NAME=bob-hooks
+npm run deploy
+npm run remote-tests
+
+# Both stacks coexist without conflicts
+```
+
+**Example: CI/CD pipeline**
+
+```bash
+# Use unique stack name per pipeline run
+export STACK_NAME=ci-hooks-${BUILD_ID}
+npm run cicd
+
+# Clean up after tests
+npm run cdk-destroy
+```
+
+**Example: Using .env file**
+
+```bash
+# Create .env file (see .env)
+echo "STACK_NAME=dev-hooks" > .env
+
+# Deploy and test
+npm run deploy
+npm run remote-tests
+```
+
+**Important notes:**
+
+- Hook aliases must be unique per account - two stacks with the same name will conflict
+- Test stacks must match the pattern `test-{stack-name}*` to be validated by the hooks
+- The `s3-demo*` pattern is included in all stack filters for demo applications
 
 ### AWS Environment
 
 CDK uses environment variables for account/region targeting:
+
 - `CDK_DEFAULT_ACCOUNT`
 - `CDK_DEFAULT_REGION`
 
@@ -166,17 +248,17 @@ These are automatically set by the AWS CLI configuration.
 
 ## Scripts Reference
 
-| Script | Description |
-|--------|-------------|
-| `npm run local-checks` | Run TypeScript compilation, linting, and formatting checks |
-| `npm run lint` | Run ESLint with auto-fix dry-run |
-| `npm run format` | Check code formatting with Prettier |
-| `npm run local-test-hooks` | Test CloudFormation Guard rules locally |
-| `npm run deploy` | Deploy the hooks stack |
-| `npm run cdk-diff` | Show infrastructure changes |
-| `npm run cdk-destroy` | Delete the deployed stack |
-| `npm run remote-tests` | Run integration tests |
-| `npm run cicd` | Full CI/CD pipeline |
+| Script                     | Description                                                |
+| -------------------------- | ---------------------------------------------------------- |
+| `npm run local-checks`     | Run TypeScript compilation, linting, and formatting checks |
+| `npm run lint`             | Run ESLint with auto-fix dry-run                           |
+| `npm run format`           | Check code formatting with Prettier                        |
+| `npm run local-test-hooks` | Test CloudFormation Guard rules locally                    |
+| `npm run deploy`           | Deploy the hooks stack                                     |
+| `npm run cdk-diff`         | Show infrastructure changes                                |
+| `npm run cdk-destroy`      | Delete the deployed stack                                  |
+| `npm run remote-tests`     | Run integration tests                                      |
+| `npm run cicd`             | Full CI/CD pipeline                                        |
 
 ## Contributing
 
