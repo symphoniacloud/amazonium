@@ -1,0 +1,15 @@
+Parameters:
+  StackName:
+    Type: String
+    Description: Stack name for bucket naming
+
+Resources:
+  TestBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${StackName}-${AWS::AccountId}-${AWS::Region}-bucket'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
