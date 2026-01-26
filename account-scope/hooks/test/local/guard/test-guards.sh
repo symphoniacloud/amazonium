@@ -12,7 +12,7 @@ FAILED_TEST_NAMES=()
 
 # Base directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 GUARD_DIR="$PROJECT_ROOT/src/guard/resource-scope"
 TEMPLATE_DIR="$SCRIPT_DIR/templates"
 
@@ -83,7 +83,6 @@ test_resource_rules() {
     fi
 }
 
-# Main execution
 main() {
     # Find all resource type directories in templates/
     for resource_dir in "$TEMPLATE_DIR"/*; do
@@ -95,10 +94,10 @@ main() {
 
     # Print results
     if [ $FAILED_TESTS -eq 0 ]; then
-        echo "$TOTAL_TESTS tests passed"
+        echo "$TOTAL_TESTS guard tests passed"
         exit 0
     else
-        echo "Failed tests:"
+        echo "Failed guard tests:"
         for test_name in "${FAILED_TEST_NAMES[@]}"; do
             echo "  $test_name"
         done

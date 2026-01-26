@@ -76,7 +76,7 @@ Test CloudFormation Guard rules before deployment:
 npm run local-test-hooks
 ```
 
-This validates Guard rules against test templates to ensure they work correctly. See [test/guard/README.md](test/guard/README.md) for details.
+This validates Guard rules against test templates to ensure they work correctly. See [test/guard/README.md](test/local/guard/README.md) for details.
 
 ### View Changes
 

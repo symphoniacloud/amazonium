@@ -23,10 +23,11 @@
     "vitest": "3.x"
   },
   "scripts": {
-    "local-checks": "npx tsc && npm run lint && npm run format",
+    "local-checks": "npx tsc && npm run lint && npm run format && npm run local-tests",
     "lint": "eslint --max-warnings=0 --fix-dry-run \"{src,test}/**/*.{js,ts}\"",
     "format": "prettier --check \"{src,test}/**/*.{js,ts}\"",
-    "local-test-hooks": "cd test/guard && ./test-guards.sh",
+    "local-tests": "npm run local-guard-tests",
+    "local-guard-tests": "cd test/local/guard && ./test-guards.sh",
     "remote-tests": "npx vitest run --dir test/remote --config test/remote/vitest.config.mts",
     "deploy": "cd src/cdk && npx cdk deploy",
     "cdk-diff": "cd src/cdk && npx cdk diff",
