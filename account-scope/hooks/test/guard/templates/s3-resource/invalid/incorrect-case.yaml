@@ -1,0 +1,18 @@
+HookContext:
+  AWSAccountID: "123456789012"
+  StackId: "arn:aws:cloudformation:us-west-2:123456789012:stack/my-app-stack/1a2b3c4d-5e6f-7890-abcd-ef1234567890"
+  HookTypeName: "AWS::S3::BucketGuard"
+  HookTypeVersion: "1.0"
+  InvocationPoint: "CREATE_PRE_PROVISION"
+  TargetName: "AWS::S3::Bucket"
+  TargetType: "RESOURCE"
+
+Resources:
+  IncorrectCaseBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: my-app-stack-123456789012-us-west-2-BUCKET
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms

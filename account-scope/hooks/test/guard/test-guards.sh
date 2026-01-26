@@ -5,16 +5,10 @@
 
 set -e
 
-# Color codes for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
 # Test counters
 TOTAL_TESTS=0
-PASSED_TESTS=0
 FAILED_TESTS=0
+FAILED_TEST_NAMES=()
 
 # Base directories
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -24,19 +18,15 @@ TEMPLATE_DIR="$SCRIPT_DIR/templates"
 
 # Check if cfn-guard is installed
 if ! command -v cfn-guard &> /dev/null; then
-    echo -e "${RED}Error: cfn-guard is not installed${NC}"
+    echo "Error: cfn-guard is not installed"
     echo "Install it with: brew install cloudformation-guard"
-    echo "Or see: https://github.com/aws-cloudformation/cloudformation-guard"
     exit 1
 fi
 
-echo "CloudFormation Guard version: $(cfn-guard --version)"
-echo ""
-
-# Function to test a single rule against a template
-# Args: rule_name, rule_file, template_file, should_pass (true/false)
-test_rule() {
-    local rule_name=$1
+# Function to test a single template file against a rule
+# Args: test_name, rule_file, template_file, should_pass (true/false)
+test_template() {
+    local test_name=$1
     local rule_file=$2
     local template_file=$3
     local should_pass=$4
@@ -44,106 +34,77 @@ test_rule() {
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
 
     # Run cfn-guard validate
-    if cfn-guard validate --rules "$rule_file" --data "$template_file" &> /tmp/guard_output.txt; then
+    if cfn-guard validate --rules "$rule_file" --data "$template_file" &> /dev/null; then
         # Guard returned success (exit code 0)
-        if [ "$should_pass" = "true" ]; then
-            echo -e "${GREEN}✓${NC} $rule_name - PASS template (expected pass)"
-            PASSED_TESTS=$((PASSED_TESTS + 1))
-        else
-            echo -e "${RED}✗${NC} $rule_name - FAIL template (expected fail, got pass)"
-            echo "Template should have failed but passed validation"
-            cat /tmp/guard_output.txt
+        if [ "$should_pass" = "false" ]; then
             FAILED_TESTS=$((FAILED_TESTS + 1))
+            FAILED_TEST_NAMES+=("$test_name (expected fail, got pass)")
         fi
     else
         # Guard returned failure (non-zero exit code)
-        if [ "$should_pass" = "false" ]; then
-            echo -e "${GREEN}✓${NC} $rule_name - FAIL template (expected fail)"
-            PASSED_TESTS=$((PASSED_TESTS + 1))
-        else
-            echo -e "${RED}✗${NC} $rule_name - PASS template (expected pass, got fail)"
-            echo "Template should have passed but failed validation:"
-            cat /tmp/guard_output.txt
+        if [ "$should_pass" = "true" ]; then
             FAILED_TESTS=$((FAILED_TESTS + 1))
+            FAILED_TEST_NAMES+=("$test_name (expected pass, got fail)")
         fi
     fi
 }
 
-# Function to test S3 resource rules
-test_s3_resource_rules() {
-    echo -e "${YELLOW}Testing S3 Resource Guard Rules${NC}"
-    echo "=================================="
+# Function to test rules for a specific resource type
+test_resource_rules() {
+    local resource_type=$1
+    local rule_file="$GUARD_DIR/${resource_type}.guard"
+    local valid_dir="$TEMPLATE_DIR/$resource_type/valid"
+    local invalid_dir="$TEMPLATE_DIR/$resource_type/invalid"
 
-    local rule_file="$GUARD_DIR/s3-resource.guard"
-    local pass_template="$TEMPLATE_DIR/s3-resource/pass.yaml"
-    local fail_template="$TEMPLATE_DIR/s3-resource/fail.yaml"
-
-    # Check if files exist
+    # Check if rule file exists
     if [ ! -f "$rule_file" ]; then
-        echo -e "${RED}Error: Guard rule file not found: $rule_file${NC}"
+        echo "Error: Guard rule file not found: $rule_file"
         exit 1
     fi
 
-    if [ ! -f "$pass_template" ]; then
-        echo -e "${RED}Error: Pass template not found: $pass_template${NC}"
-        exit 1
+    # Test all valid templates
+    if [ -d "$valid_dir" ]; then
+        for template in "$valid_dir"/*.yaml; do
+            if [ -f "$template" ]; then
+                local test_name=$(basename "$template" .yaml)
+                test_template "$test_name" "$rule_file" "$template" "true"
+            fi
+        done
     fi
 
-    if [ ! -f "$fail_template" ]; then
-        echo -e "${RED}Error: Fail template not found: $fail_template${NC}"
-        exit 1
+    # Test all invalid templates
+    if [ -d "$invalid_dir" ]; then
+        for template in "$invalid_dir"/*.yaml; do
+            if [ -f "$template" ]; then
+                local test_name=$(basename "$template" .yaml)
+                test_template "$test_name" "$rule_file" "$template" "false"
+            fi
+        done
     fi
-
-    # Test pass scenario
-    test_rule "S3 Resource Rules" "$rule_file" "$pass_template" "true"
-
-    # Test fail scenario
-    test_rule "S3 Resource Rules" "$rule_file" "$fail_template" "false"
-
-    echo ""
 }
 
 # Main execution
 main() {
-    echo "Starting CloudFormation Guard Rule Tests"
-    echo "========================================"
-    echo ""
+    # Find all resource type directories in templates/
+    for resource_dir in "$TEMPLATE_DIR"/*; do
+        if [ -d "$resource_dir" ]; then
+            local resource_type=$(basename "$resource_dir")
+            test_resource_rules "$resource_type"
+        fi
+    done
 
-    # Run tests based on command-line argument
-    if [ $# -eq 0 ]; then
-        # No arguments - run all tests
-        test_s3_resource_rules
-    else
-        # Run specific test
-        case $1 in
-            s3-resource)
-                test_s3_resource_rules
-                ;;
-            *)
-                echo -e "${RED}Unknown test: $1${NC}"
-                echo "Available tests: s3-resource"
-                exit 1
-                ;;
-        esac
-    fi
-
-    # Print summary
-    echo "========================================"
-    echo "Test Summary"
-    echo "========================================"
-    echo "Total Tests: $TOTAL_TESTS"
-    echo -e "Passed: ${GREEN}$PASSED_TESTS${NC}"
-    echo -e "Failed: ${RED}$FAILED_TESTS${NC}"
-    echo ""
-
+    # Print results
     if [ $FAILED_TESTS -eq 0 ]; then
-        echo -e "${GREEN}All tests passed!${NC}"
+        echo "$TOTAL_TESTS tests passed"
         exit 0
     else
-        echo -e "${RED}Some tests failed!${NC}"
+        echo "Failed tests:"
+        for test_name in "${FAILED_TEST_NAMES[@]}"; do
+            echo "  $test_name"
+        done
         exit 1
     fi
 }
 
 # Run main function
-main "$@"
+main
