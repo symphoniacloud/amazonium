@@ -1,5 +1,6 @@
 {
   "name": "amazonium-s3-demo",
+  "type": "module",
   "engines": {
     "node": ">=22.0.0"
   },
