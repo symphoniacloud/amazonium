@@ -46,6 +46,13 @@ Resources:
             install:
               runtime-versions:
                 nodejs: 22
+              commands:
+                - echo "Installing cfn-guard..."
+                - curl -L -o cfn-guard.tar.gz https://github.com/aws-cloudformation/cloudformation-guard/releases/latest/download/cfn-guard-v3-ubuntu-latest.tar.gz
+                - tar -xzf cfn-guard.tar.gz
+                - mv cfn-guard-v3-ubuntu-latest/cfn-guard /usr/local/bin/cfn-guard
+                - chmod +x /usr/local/bin/cfn-guard
+                - cfn-guard --version
             build:
               commands:
                 - cd account-scope/hooks
