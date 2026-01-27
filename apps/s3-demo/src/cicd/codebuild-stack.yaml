@@ -41,7 +41,7 @@ Resources:
           version: 0.2
           env:
             variables:
-              STACK_NAME: 's3-demo-cd'
+              STACK_NAME: 'amazonium-examples-cicd-s3'
           phases:
             install:
               runtime-versions:
