@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CodeBuild project for Amazonium CloudFormation Hooks
+
+Parameters:
+  GitHubRepoUrl:
+    Type: String
+    Default: 'https://github.com/symphoniacloud/amazonium.git'
+    Description: GitHub repository URL
+
+Resources:
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: amazonium-hooks-cicd
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      TimeoutInMinutes: 10
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/amazonlinux-x86_64-standard:5.0
+      Source:
+        Type: GITHUB
+        Location: !Ref GitHubRepoUrl
+        GitCloneDepth: 1
+        BuildSpec: !Sub |
+          version: 0.2
+          env:
+            variables:
+              STACK_NAME: 'amazonium-hooks-cicd'
+          phases:
+            install:
+              runtime-versions:
+                nodejs: 22
+            build:
+              commands:
+                - cd account-scope/hooks
+                - npm run cicd
