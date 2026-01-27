@@ -18,15 +18,21 @@ export class HooksStack extends Stack {
 }
 
 export function defineGuardHooks(scope: Construct, props: StackPropsWithAccountRegionAndStackName) {
+  const stackName = props.stackName
   const guardHookRole = new Role(scope, 'GuardHookRole', {
     assumedBy: new ServicePrincipal('hooks.cloudformation.amazonaws.com')
   })
 
+  // If stackName is "amazonium-hooks" then example stacks are 'amazonium-examples*'
+  // If stackName is "amazonium-hooks-alice" then example stacks are 'amazonium-examples-alice*'
+  const exampleStackNameWildcard = stackName.includes(DEFAULT_STACK_NAME)
+    ? `amazonium-examples${stackName.slice(DEFAULT_STACK_NAME.length)}*`
+    : undefined
   const stackFilterInclude = [
-    `t-${props.stackName}*`,
-    ...(props.stackName === DEFAULT_STACK_NAME ? ['s3-demo*'] : [])
+    `t-${stackName}*`,
+    ...(exampleStackNameWildcard ? [exampleStackNameWildcard] : [])
   ]
-  const stackFilterExclude = [`${props.stackName}*`]
+  const stackFilterExclude = [`${stackName}*`]
 
   defineResourceGuardHook(
     scope,
@@ -36,7 +42,7 @@ export function defineGuardHooks(scope: Construct, props: StackPropsWithAccountR
     stackFilterInclude,
     stackFilterExclude,
     ['AWS::S3::Bucket'],
-    props
+    stackName
   )
 }
 
@@ -48,7 +54,7 @@ export function defineResourceGuardHook(
   stackFilterInclude: string[],
   stackFilterExclude: string[],
   targetNames: string[],
-  props: StackPropsWithAccountRegionAndStackName
+  stackName: string
 ) {
   // Might want to eventually more explicitly manage this
   // but for now this is a way of easily deploying s3 content
@@ -61,7 +67,7 @@ export function defineResourceGuardHook(
   guardFileAsset.grantRead(role)
 
   // Aliases have to be unique across the account, so make it based on Stack name
-  const hookAlias = `${props.stackName === DEFAULT_STACK_NAME ? 'Amazonium' : `${kebabCaseToPascalCase(props.stackName)}`}::Guard::${kebabCaseToPascalCase(guardName)}`
+  const hookAlias = `${stackName === DEFAULT_STACK_NAME ? 'Amazonium' : `${kebabCaseToPascalCase(stackName)}`}::Guard::${kebabCaseToPascalCase(guardName)}`
   // Eventually consider adding logging
   const hook = new CfnGuardHook(scope, id, {
     alias: hookAlias,
