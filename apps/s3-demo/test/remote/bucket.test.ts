@@ -1,8 +1,15 @@
 import { expect, test } from 'vitest'
 import { CloudFormationClient, DescribeStacksCommand } from '@aws-sdk/client-cloudformation'
-import { DEFAULT_STACK_NAME } from '../../src/cdk/S3DemoStack'
+import { DEFAULT_STACK_NAME } from '../../src/cdk/S3DemoStack.js'
 import { GetBucketEncryptionCommand, S3Client } from '@aws-sdk/client-s3'
 import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts'
+
+try {
+  // Load .env file (this is Node 22+)
+  process.loadEnvFile()
+} catch {
+  // .env file doesn't exist or can't be read, that's okay
+}
 
 test('Bucket should exist with correct encryption', async () => {
   const stackName = process.env['STACK_NAME'] || DEFAULT_STACK_NAME
@@ -29,7 +36,7 @@ test('Bucket should exist with correct encryption', async () => {
   const accountId = (await new STSClient({}).send(new GetCallerIdentityCommand({}))).Account
   const region = await s3Client.config.region()
 
-  expect(bucketName).toEqual(`${stackName}-${accountId}-${region}-bucket`)
+  expect(bucketName).toEqual(`${stackName}-${accountId}-${region}-b1`)
 
   const bucketEncryption = await s3Client.send(new GetBucketEncryptionCommand({ Bucket: bucketName }))
   expect(bucketEncryption.ServerSideEncryptionConfiguration).toEqual({

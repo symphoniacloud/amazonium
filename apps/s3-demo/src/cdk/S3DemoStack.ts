@@ -2,7 +2,7 @@ import { CfnOutput, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib'
 import { BlockPublicAccess, Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3'
 import { Construct } from 'constructs'
 
-export const DEFAULT_STACK_NAME = 's3-demo'
+export const DEFAULT_STACK_NAME = 'amazonium-examples-s3'
 
 export class S3DemoStack extends Stack {
   constructor(scope: Construct, props?: StackProps) {
@@ -14,7 +14,7 @@ export class S3DemoStack extends Stack {
       // this still gives us something to work with in the CloudFormation guards
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       encryption: BucketEncryption.S3_MANAGED,
-      bucketName: `${props?.stackName}-${props?.env?.account}-${props?.env?.region}-bucket`,
+      bucketName: `${props?.stackName}-${props?.env?.account}-${props?.env?.region}-b1`,
       // Bucket won't be destroyed if it has contents
       removalPolicy: RemovalPolicy.DESTROY
     })
