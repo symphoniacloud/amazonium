@@ -7,6 +7,6 @@ echo "Deploying CodeBuild stack $STACK_NAME"
 
 aws cloudformation deploy \
   --stack-name "$STACK_NAME" \
-  --template-file codebuild-stack.yaml \
+  --template-file codebuild-template.yaml \
   --capabilities CAPABILITY_IAM \
   --no-fail-on-empty-changeset
