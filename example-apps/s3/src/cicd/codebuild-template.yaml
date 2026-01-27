@@ -48,5 +48,5 @@ Resources:
                 nodejs: 22
             build:
               commands:
-                - cd apps/s3-demo
+                - cd example-apps/s3
                 - npm run cicd

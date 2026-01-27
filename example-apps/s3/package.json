@@ -1,5 +1,5 @@
 {
-  "name": "amazonium-s3-demo",
+  "name": "amazonium-examples-s3",
   "type": "module",
   "engines": {
     "node": ">=22.0.0"
