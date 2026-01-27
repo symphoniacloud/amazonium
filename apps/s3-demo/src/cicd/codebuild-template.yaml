@@ -24,7 +24,7 @@ Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: s3-demo-cd
+      Name: amazonium-examples-cicd-s3
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       TimeoutInMinutes: 10
       Artifacts:

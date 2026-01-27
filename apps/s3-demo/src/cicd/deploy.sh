@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-STACK_NAME="${STACK_NAME:-s3-demo-codebuild}"
+STACK_NAME="${STACK_NAME:-amazonium-examples-s3-codebuild}"
 
 echo "Deploying CodeBuild stack $STACK_NAME"
 
