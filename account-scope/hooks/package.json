@@ -28,7 +28,7 @@
     "lint": "eslint --max-warnings=0 --fix-dry-run \"{src,test}/**/*.{js,ts}\"",
     "format": "prettier --check \"{src,test}/**/*.{js,ts}\"",
     "local-tests": "npm run local-guard-tests",
-    "local-guard-tests": "cd test/local/guard && ./test-guards.sh",
+    "local-guard-tests": "npx vitest run --dir test/local/guard",
     "remote-tests": "npx vitest run --dir test/remote --config test/remote/vitest.config.mts",
     "deploy": "cd src/cdk && npx cdk deploy",
     "cdk-diff": "cd src/cdk && npx cdk diff",
