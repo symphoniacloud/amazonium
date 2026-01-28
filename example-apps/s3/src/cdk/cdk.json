@@ -1,5 +1,5 @@
 {
-  "app": "npx tsx singleStackApp.ts",
+  "app": "npx tsx s3DemoMain.ts",
   "build": "cd ../.. && npx tsc",
   "output": "../../build/cdk.out",
   "requireApproval": "never"
