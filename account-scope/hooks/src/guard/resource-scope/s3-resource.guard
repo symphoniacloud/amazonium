@@ -3,9 +3,7 @@
 let s3_buckets = Resources.*[ Type == 'AWS::S3::Bucket']
 
 rule S3_BUCKET_ENCRYPTION_KMS when %s3_buckets !empty {
-  %s3_buckets.Properties.BucketEncryption exists
-  %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration exists
-  %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault exists
+  %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration !empty
   %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault.SSEAlgorithm == "aws:kms"
   %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault.KMSMasterKeyID exists
 
@@ -58,7 +56,6 @@ rule S3_BUCKET_NO_CORS when %s3_buckets !empty {
 }
 
 rule S3_BUCKET_OWNERSHIP_CONTROLS when %s3_buckets !empty {
-  %s3_buckets.Properties.OwnershipControls exists
   %s3_buckets.Properties.OwnershipControls.Rules !empty
   %s3_buckets.Properties.OwnershipControls.Rules[*].ObjectOwnership == "BucketOwnerEnforced"
   <<
@@ -74,7 +71,6 @@ rule S3_BUCKET_ACCESS_CONTROL when %s3_buckets !empty {
 }
 
 rule S3_BUCKET_PUBLIC_ACCESS_BLOCKED when %s3_buckets !empty {
-  %s3_buckets.Properties.PublicAccessBlockConfiguration exists
   %s3_buckets.Properties.PublicAccessBlockConfiguration.BlockPublicAcls == true
   %s3_buckets.Properties.PublicAccessBlockConfiguration.BlockPublicPolicy == true
   %s3_buckets.Properties.PublicAccessBlockConfiguration.IgnorePublicAcls == true
@@ -85,10 +81,7 @@ rule S3_BUCKET_PUBLIC_ACCESS_BLOCKED when %s3_buckets !empty {
 }
 
 rule S3_BUCKET_LIFECYCLE_MULTIPART_EXPIRY when %s3_buckets !empty {
-  %s3_buckets.Properties.LifecycleConfiguration exists
-  %s3_buckets.Properties.LifecycleConfiguration.Rules exists
-  %s3_buckets.Properties.LifecycleConfiguration.Rules[*].AbortIncompleteMultipartUpload exists
-  %s3_buckets.Properties.LifecycleConfiguration.Rules[*].AbortIncompleteMultipartUpload.DaysAfterInitiation exists
+  %s3_buckets.Properties.LifecycleConfiguration.Rules !empty
   %s3_buckets.Properties.LifecycleConfiguration.Rules[*].AbortIncompleteMultipartUpload.DaysAfterInitiation <= 7
   <<
     Violation: S3 buckets must have AbortIncompleteMultipartUpload with DaysAfterInitiation <= 7 on all lifecycle rules
