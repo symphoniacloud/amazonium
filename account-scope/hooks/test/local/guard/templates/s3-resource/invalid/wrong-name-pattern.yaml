@@ -11,9 +11,32 @@ Resources:
   WrongNamePatternBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: wrong-stack-999999999999-us-east-1-bucket
+      BucketName: wrong-stack-123456789012-us-west-2-bucket
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: aws:kms
-              KMSMasterKeyID: alias/aws/s3
+              KMSMasterKeyID: alias/my-app-key
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      AccessControl: BucketOwnerFullControl
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireIncompleteMultipart
+            Status: Enabled
+            Prefix: ""
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+      Tags:
+        - Key: ApplicationId
+          Value: my-app
+        - Key: dCatalogue
+          Value: my-catalogue
+        - Key: BusinessUnit
+          Value: engineering

@@ -2,13 +2,19 @@
 
 let s3_buckets = Resources.*[ Type == 'AWS::S3::Bucket']
 
-rule S3_BUCKET_ENCRYPTION_ALGORITHM when %s3_buckets !empty {
+rule S3_BUCKET_ENCRYPTION_KMS when %s3_buckets !empty {
   %s3_buckets.Properties.BucketEncryption exists
   %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration exists
   %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault exists
-  %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault.SSEAlgorithm in ["aws:kms","AES256"]
+  %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault.SSEAlgorithm == "aws:kms"
+  %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault.KMSMasterKeyID exists
+
+  let kms_key_id = %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault.KMSMasterKeyID
+  let kms_key_pattern = "^(alias/.+|arn:aws:kms:.+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$"
+  let kms_key_validated = regex_replace(%kms_key_id, %kms_key_pattern, "VALID")
+  %kms_key_validated == "VALID"
   <<
-    Violation: S3 buckets must use KMS or AES256 encryption
+    Violation: S3 buckets must use aws:kms encryption with a valid KMSMasterKeyID (alias/*, arn:aws:kms:*, or UUID)
   >>
 }
 
@@ -34,5 +40,76 @@ rule S3_BUCKET_NAMING_PATTERN when %s3_buckets !empty {
   %name == to_lower(%name)
   <<
     Violation: Bucket name must be {stackName}-{account}-{region}-{suffix} (lowercase alphanumeric)
+  >>
+}
+
+rule S3_BUCKET_NO_WEBSITE_HOSTING when %s3_buckets !empty {
+  %s3_buckets.Properties.WebsiteConfiguration !exists
+  <<
+    Violation: S3 buckets must not have WebsiteConfiguration enabled
+  >>
+}
+
+rule S3_BUCKET_NO_CORS when %s3_buckets !empty {
+  %s3_buckets.Properties.CorsConfiguration !exists
+  <<
+    Violation: S3 buckets must not have CorsConfiguration enabled
+  >>
+}
+
+rule S3_BUCKET_OWNERSHIP_CONTROLS when %s3_buckets !empty {
+  %s3_buckets.Properties.OwnershipControls exists
+  %s3_buckets.Properties.OwnershipControls.Rules !empty
+  %s3_buckets.Properties.OwnershipControls.Rules[*].ObjectOwnership == "BucketOwnerEnforced"
+  <<
+    Violation: S3 buckets must have OwnershipControls with ObjectOwnership set to BucketOwnerEnforced
+  >>
+}
+
+rule S3_BUCKET_ACCESS_CONTROL when %s3_buckets !empty {
+  %s3_buckets.Properties.AccessControl == "BucketOwnerFullControl"
+  <<
+    Violation: S3 buckets must have AccessControl set to BucketOwnerFullControl
+  >>
+}
+
+rule S3_BUCKET_PUBLIC_ACCESS_BLOCKED when %s3_buckets !empty {
+  %s3_buckets.Properties.PublicAccessBlockConfiguration exists
+  %s3_buckets.Properties.PublicAccessBlockConfiguration.BlockPublicAcls == true
+  %s3_buckets.Properties.PublicAccessBlockConfiguration.BlockPublicPolicy == true
+  %s3_buckets.Properties.PublicAccessBlockConfiguration.IgnorePublicAcls == true
+  %s3_buckets.Properties.PublicAccessBlockConfiguration.RestrictPublicBuckets == true
+  <<
+    Violation: S3 buckets must have all PublicAccessBlockConfiguration settings set to true
+  >>
+}
+
+rule S3_BUCKET_LIFECYCLE_MULTIPART_EXPIRY when %s3_buckets !empty {
+  %s3_buckets.Properties.LifecycleConfiguration exists
+  %s3_buckets.Properties.LifecycleConfiguration.Rules exists
+  %s3_buckets.Properties.LifecycleConfiguration.Rules[*].AbortIncompleteMultipartUpload exists
+  %s3_buckets.Properties.LifecycleConfiguration.Rules[*].AbortIncompleteMultipartUpload.DaysAfterInitiation exists
+  %s3_buckets.Properties.LifecycleConfiguration.Rules[*].AbortIncompleteMultipartUpload.DaysAfterInitiation <= 7
+  <<
+    Violation: S3 buckets must have AbortIncompleteMultipartUpload with DaysAfterInitiation <= 7 on all lifecycle rules
+  >>
+}
+
+rule S3_BUCKET_REQUIRED_TAGS when %s3_buckets !empty {
+  %s3_buckets.Properties.Tags exists
+
+  let app_id_tags = %s3_buckets.Properties.Tags[Key == "ApplicationId"]
+  %app_id_tags !empty
+  %app_id_tags[*].Value != ""
+
+  let catalogue_tags = %s3_buckets.Properties.Tags[Key == "dCatalogue"]
+  %catalogue_tags !empty
+  %catalogue_tags[*].Value != ""
+
+  let business_unit_tags = %s3_buckets.Properties.Tags[Key == "BusinessUnit"]
+  %business_unit_tags !empty
+  %business_unit_tags[*].Value != ""
+  <<
+    Violation: S3 buckets must have non-empty ApplicationId, dCatalogue, and BusinessUnit tags
   >>
 }

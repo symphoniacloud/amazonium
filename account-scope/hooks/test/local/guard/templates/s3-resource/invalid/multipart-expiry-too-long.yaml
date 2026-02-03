@@ -1,6 +1,6 @@
 HookContext:
   AWSAccountID: "123456789012"
-  StackId: "arn:aws:cloudformation:us-east-1:123456789012:stack/test-stack/1a2b3c4d-5e6f-7890-abcd-ef1234567890"
+  StackId: "arn:aws:cloudformation:us-west-2:123456789012:stack/my-app-stack/1a2b3c4d-5e6f-7890-abcd-ef1234567890"
   HookTypeName: "AWS::S3::BucketGuard"
   HookTypeVersion: "1.0"
   InvocationPoint: "CREATE_PRE_PROVISION"
@@ -8,10 +8,10 @@ HookContext:
   TargetType: "RESOURCE"
 
 Resources:
-  DataBucket:
+  MultipartExpiryBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: test-stack-123456789012-us-east-1-data
+      BucketName: my-app-stack-123456789012-us-west-2-bucket
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
@@ -32,7 +32,7 @@ Resources:
             Status: Enabled
             Prefix: ""
             AbortIncompleteMultipartUpload:
-              DaysAfterInitiation: 7
+              DaysAfterInitiation: 14
       Tags:
         - Key: ApplicationId
           Value: my-app

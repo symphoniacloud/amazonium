@@ -3,4 +3,27 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub '${AWS::StackName}-${AWS::AccountId}-${AWS::Region}-bucket'
-      # Missing BucketEncryption, therefore invalid
+      # BucketEncryption intentionally absent — violates S3_BUCKET_ENCRYPTION_KMS
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      AccessControl: BucketOwnerFullControl
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireIncompleteMultipart
+            Status: Enabled
+            Prefix: ""
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+      Tags:
+        - Key: ApplicationId
+          Value: my-app
+        - Key: dCatalogue
+          Value: my-catalogue
+        - Key: BusinessUnit
+          Value: engineering
