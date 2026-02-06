@@ -13,7 +13,6 @@ try {
 }
 
 test('Bucket should exist with correct encryption', async () => {
-  // TODO - calculate stack name
   const instanceName = getAppInstanceNameFromEnvironment()
   const stackName = calculateStackName(APP_PROPS.appName, APP_PROPS.stackId, instanceName)
 
@@ -42,14 +41,8 @@ test('Bucket should exist with correct encryption', async () => {
   expect(bucketName).toEqual(`${APP_PROPS.appName}-${instanceName}-${accountId}-${region}-b1`.toLowerCase())
 
   const bucketEncryption = await s3Client.send(new GetBucketEncryptionCommand({ Bucket: bucketName }))
-  expect(bucketEncryption.ServerSideEncryptionConfiguration).toEqual({
-    Rules: [
-      {
-        ApplyServerSideEncryptionByDefault: {
-          SSEAlgorithm: 'AES256'
-        },
-        BucketKeyEnabled: false
-      }
-    ]
-  })
+  const rules = bucketEncryption.ServerSideEncryptionConfiguration?.Rules
+  expect(rules).toHaveLength(1)
+  expect(rules![0].ApplyServerSideEncryptionByDefault?.SSEAlgorithm).toEqual('aws:kms')
+  expect(rules![0].ApplyServerSideEncryptionByDefault?.KMSMasterKeyID).toBeDefined()
 })

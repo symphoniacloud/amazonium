@@ -2,6 +2,7 @@ import { SingleStackAZAppProps } from '../azcdk/AZApp.js'
 import { AZStack, AZStackProps } from '../azcdk/AZStack.js'
 import { Construct } from 'constructs'
 import { AZBucket } from '../azcdk/constructs/AZBucket.js'
+import { Alias } from 'aws-cdk-lib/aws-kms'
 
 export const APP_PROPS: SingleStackAZAppProps = {
   appName: 'S3Demo',
@@ -12,6 +13,14 @@ export class S3DemoStack extends AZStack {
   constructor(scope: Construct, props: AZStackProps) {
     super(scope, props)
 
-    new AZBucket(this, props, { logicalName: 'b1' })
+    new AZBucket(this, props, {
+      logicalName: 'b1',
+      encryptionKey: Alias.fromAliasName(this, 'S3KmsKey', 'alias/aws/s3'),
+      tags: {
+        applicationId: 'S3Demo',
+        dCatalogue: 'S3Demo',
+        businessUnit: 'engineering'
+      }
+    })
   }
 }
