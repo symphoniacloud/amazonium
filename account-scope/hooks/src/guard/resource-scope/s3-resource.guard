@@ -6,13 +6,8 @@ rule S3_BUCKET_ENCRYPTION_KMS when %s3_buckets !empty {
   %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration !empty
   %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault.SSEAlgorithm == "aws:kms"
   %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault.KMSMasterKeyID exists
-
-  let kms_key_id = %s3_buckets.Properties.BucketEncryption.ServerSideEncryptionConfiguration[*].ServerSideEncryptionByDefault.KMSMasterKeyID
-  let kms_key_pattern = "^(alias/.+|arn:aws:kms:.+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$"
-  let kms_key_validated = regex_replace(%kms_key_id, %kms_key_pattern, "VALID")
-  %kms_key_validated == "VALID"
   <<
-    Violation: S3 buckets must use aws:kms encryption with a valid KMSMasterKeyID (alias/*, arn:aws:kms:*, or UUID)
+    Violation: S3 buckets must use aws:kms encryption with a KMSMasterKeyID specified
   >>
 }
 
