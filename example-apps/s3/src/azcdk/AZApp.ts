@@ -1,7 +1,5 @@
 import { App, Environment } from 'aws-cdk-lib'
 import { Construct } from 'constructs'
-import { fileURLToPath } from 'node:url'
-import path from 'node:path'
 import { AZStack, AZStackProps } from './AZStack.js'
 import { throwFunction } from '../util/errors.js'
 
@@ -28,15 +26,6 @@ export function defineSingleStackAZApp<T extends AZStack>(
 }
 
 function createAZStackProps(appName: string, stackId: string): AZStackProps {
-  try {
-    // Walk up from this file to find .env (this is Node 22+)
-    const thisDir = path.dirname(fileURLToPath(import.meta.url))
-    // TODO - this will need to change when this becomes a library
-    process.loadEnvFile(path.resolve(thisDir, '../../../../.env'))
-  } catch {
-    // .env file doesn't exist or can't be read, that's okay
-  }
-
   const instanceName = getAppInstanceNameFromEnvironment()
 
   return {

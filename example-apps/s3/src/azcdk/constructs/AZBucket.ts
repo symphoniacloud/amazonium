@@ -1,4 +1,4 @@
-import { BlockPublicAccess, Bucket, BucketEncryption, CfnBucket, ObjectOwnership } from 'aws-cdk-lib/aws-s3'
+import { BlockPublicAccess, Bucket, BucketEncryption, ObjectOwnership } from 'aws-cdk-lib/aws-s3'
 import { Construct } from 'constructs'
 import { CfnOutput, Duration, RemovalPolicy, Tags } from 'aws-cdk-lib'
 import { IKey } from 'aws-cdk-lib/aws-kms'
@@ -36,8 +36,8 @@ export class AZBucket extends Bucket {
     // Guard requires AccessControl: BucketOwnerFullControl alongside
     // ObjectOwnership: BucketOwnerEnforced — use escape hatch since CDK
     // validation may block this combination via L2 props
-    const cfnBucket = this.node.defaultChild as CfnBucket
-    cfnBucket.addPropertyOverride('AccessControl', 'BucketOwnerFullControl')
+    // const cfnBucket = this.node.defaultChild as CfnBucket
+    // cfnBucket.addPropertyOverride('AccessControl', 'BucketOwnerFullControl')
 
     Tags.of(this).add('ApplicationId', props.tags.applicationId)
     Tags.of(this).add('dCatalogue', props.tags.dCatalogue)
